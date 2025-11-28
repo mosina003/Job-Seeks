@@ -163,4 +163,93 @@ export const getAdminJobs =async (req, res) => {
         });
     }
 };
+
+//for recruiter to update their posted jobs
+export const updateJob = async (req, res) => {
+    try {
+        const jobId = req.params.id;
+        const userId = req.id; // Extracted from isauth middleware
+        const {title, description, requirements, location, salary, jobType, experience, position, companyId} = req.body;
+
+        // Validate job ID format
+        if (!mongoose.Types.ObjectId.isValid(jobId)) {
+            return res.status(400).json({
+                message: "Invalid job ID format",
+                success: false,
+            });
+        }
+
+        // Find the job and check if user is authorized to update
+        const job = await Job.findById(jobId);
+        if (!job) {
+            return res.status(404).json({
+                message: "Job not found",
+                success: false,
+            });
+        }
+
+        // Check if the user is the creator of the job
+        if (job.created_by.toString() !== userId) {
+            return res.status(403).json({
+                message: "You are not authorized to update this job",
+                success: false,
+            });
+        }
+
+        // Normalize requirements
+        let requirementsArray = [];
+        if (requirements) {
+            if (Array.isArray(requirements)) {
+                requirementsArray = requirements.map(r => String(r).trim()).filter(Boolean);
+            } else if (typeof requirements === 'string') {
+                requirementsArray = requirements.split(',').map(r => r.trim()).filter(Boolean);
+            }
+        }
+
+        // Normalize jobType
+        const jobTypeMap = {
+            'full-time': 'Full-time',
+            'part-time': 'Part-time',
+            'contract': 'Contract',
+            'internship': 'Internship',
+            'full time': 'Full-time',
+            'part time': 'Part-time'
+        };
+        const normalizedJobType = jobType ? (jobTypeMap[jobType.toLowerCase()] || jobType) : job.jobType;
+
+        // Update job fields
+        job.title = title || job.title;
+        job.description = description || job.description;
+        job.requirements = requirementsArray.length > 0 ? requirementsArray : job.requirements;
+        job.location = location || job.location;
+        job.salary = salary !== undefined ? Number(salary) : job.salary;
+        job.jobType = normalizedJobType;
+        job.experienceLevel = experience || job.experienceLevel;
+        job.position = position !== undefined ? Number(position) : job.position;
+        job.company = companyId || job.company;
+
+        await job.save();
+
+        return res.status(200).json({
+            message: "Job updated successfully",
+            job,
+            success: true,
+        });
+    } catch (error) {
+        console.error("Error in updating job:", error);
+        
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                message: messages.join(', '),
+                success: false,
+            });
+        }
+        
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+        });
+    }
+};
         

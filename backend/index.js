@@ -9,10 +9,11 @@ import userRoutes from './routes/user.js';
 import companyRoute from './routes/company.js';
 import jobRoute from './routes/job.js';
 import applicationRoute from './routes/application.js';
-
+import path from 'path';
 dotenv.config({});
 
 const app = express();
+const __dirname = path.resolve();
 
 //middleware
 app.use(express.json());
@@ -29,6 +30,14 @@ app.use('/api/v1/company', companyRoute);
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/job', jobRoute);
 app.use('/api/v1/application', applicationRoute);
+
+// Serve static files from frontend dist folder
+app.use(express.static(path.join(__dirname, 'frontend/dist')));
+
+// Serve index.html for all other routes (SPA fallback)
+app.get('*', (_, res) => {
+    res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
+});
 
 app.listen(PORT,()=>{
     connectDB();

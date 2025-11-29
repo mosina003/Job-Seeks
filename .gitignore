@@ -6,6 +6,7 @@ backend/node_modules/
 
 # Environment variables
 .env
+node_modules
 .env.local
 .env.production
 **/.env

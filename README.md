@@ -1,4 +1,4 @@
-# Job Portal - MERN Stack Application
+# Job Portal - MERN Stack Application | live : https://job-seeks.onrender.com/
 
 A full-stack job portal application built with the MERN stack (MongoDB, Express.js, React, Node.js) featuring Redux for state management, Cloudinary for file storage, and a modern UI design.
 
